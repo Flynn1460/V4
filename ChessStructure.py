@@ -1,53 +1,69 @@
+import chess as ch
+
+import Engine as en
 import otherFunctions as of
 import playFunctions as pf
 
-def playerPlay():
+
+def playerPlay(board):
     colour = of.opt("Which colour do you want to play?", "w", "b")
     depth = of.opt("What depth should the computer search to? (rec 4)", "int")
+
     if colour == "w":
-        playerMove(colour)
-    
-    playerGameLoop(colour)
-    return
+        board = playerMove(board)
 
-def computerPlay():
-    pass
-
-
-def playerGameLoop(colour):
-    colourFlipped = of.flipColour(colour)
     while True:
-        engineMove(colourFlipped)
-        
-        if pf.isGameEnd():
+        board = engineMove(board, colour, depth)
+        if pf.isGameEnd(board):
             return
+        print("\n", board)
 
-        playerMove(colour)
-
-        if pf.isGameEnd():
+        board = playerMove(board)
+        if pf.isGameEnd(board):
             return
-        
-        continue
+        print("\n", board)
 
-def computerGameLoop():
-    pass
+def computerPlay(board):
+    
+    depth = of.opt("What depth should the computer search to? (rec 4)", "int")
+
+    while True:
+        board = engineMove(board, "w", depth)
+        if pf.isGameEnd(board):
+            return
+        print("\n", board)
+
+        board = engineMove(board, "b", depth)
+        if pf.isGameEnd(board):
+            return
+        print("\n", board)
 
 
-def playerMove(colour):
-    pass
+def playerMove(board):
+    while True:
+        try:
+            print("\nLegal Move List : " + str(board.legal_moves)[37:-1])
 
-def engineMove(colour):
-    pass
+            move = input("Your move : ")
+            board.push_san(move)
+            return board
+
+        except:
+            continue
+
+def engineMove(board, colour, depth):
+    return en.giveBestMove(board)
 
 
+board = ch.Board()
 
 while True:
     gamemode = of.opt("What gamemode do you want to play?", "player", "computer")
 
     if gamemode == "player":
-        playerPlay()
+        playerPlay(board)
     elif gamemode == "computer":
-        computerPlay()
+        computerPlay(board)
 
     playAgain = of.opt("Play again?", "yes", "no")
 
