@@ -1,3 +1,6 @@
+SQ_COLOR_WHITE = (237, 214, 176)
+SQ_COLOR_BLACK = (184, 135, 98)
+
 def opt(question, *args):
     print()
     value = -100
@@ -45,3 +48,15 @@ def make_matrix(board): #type(board) == chess.Board()
     return foo
 
 
+def getOutcome(outcomeInfo, results, whiteScore, blackScore):
+    if outcomeInfo.result()[0:3] == "1/2":
+        results[0] += 1
+        return results, whiteScore + 0.5, blackScore + 0.5
+
+    elif outcomeInfo.result()[0] == "1":
+        results[1] += 1
+        return results, whiteScore + 1, blackScore
+    
+    elif outcomeInfo.result()[2] == "1":
+        results[2] += 1
+        return results, whiteScore, blackScore + 1

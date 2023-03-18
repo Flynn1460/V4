@@ -15,11 +15,8 @@ def isGameEnd(board):
     elif board.is_insufficient_material():
         return True, "Insufficient Material"
     
-    
     else:
         return False
-
-
 
 def drawBoard(dis, SQ_COLOR_WHITE, SQ_COLOR_BLACK,  SQUARE_SIZE):
 
