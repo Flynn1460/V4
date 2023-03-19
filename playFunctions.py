@@ -18,6 +18,31 @@ def isGameEnd(board):
     else:
         return False
 
+
+def loadImages(SQUARE_SIZE):
+    global images
+    images = []
+
+    for pColor in ["w", "b"]:
+        for pType in ["P", "N", "B", "R", "Q", "K"]:
+            images.append(pg.image.load("Images/"+pColor+pType+".png"))
+
+def resizeImages(SQUARE_SIZE):
+    SQUARE_SIZE = SQUARE_SIZE//8
+    global imagesDict
+    imagesDict = {}
+
+    i = -1
+    for pColor in ["w", "b"]:
+        for pType in ["P", "N", "B", "R", "Q", "K"]:
+            i += 1
+
+            if pColor == "w":
+                imagesDict[pType] = pg.transform.scale(images[i], (SQUARE_SIZE, SQUARE_SIZE))
+            elif pColor == "b":
+                imagesDict[pType.lower()] = pg.transform.scale(images[i], (SQUARE_SIZE, SQUARE_SIZE))
+
+
 def drawBoard(dis, SQ_COLOR_WHITE, SQ_COLOR_BLACK,  SQUARE_SIZE):
 
     # Board Color (0 = White, 1 = Black)
@@ -39,23 +64,11 @@ def drawBoard(dis, SQ_COLOR_WHITE, SQ_COLOR_BLACK,  SQUARE_SIZE):
         for boardHeight in range(8):
 
             # Draw the square
-            pg.draw.rect(dis, CURRENT_COLOR, (SQUARE_SIZE*boardWidth, SQUARE_SIZE*boardHeight, SQUARE_SIZE, SQUARE_SIZE))
+            pg.draw.rect(dis, CURRENT_COLOR, ((SQUARE_SIZE*boardWidth)+400, SQUARE_SIZE*boardHeight, SQUARE_SIZE, SQUARE_SIZE))
 
             # Flip the square color
             CURRENT_VAL = CURRENT_VAL^1
             CURRENT_COLOR = SQUARE_COLOR_LIST[CURRENT_VAL]
-
-def loadImages(SQUARE_SIZE):
-    global imagesDict
-    imagesDict = {}
-
-    for pColor in ["w", "b"]:
-        for pType in ["P", "N", "B", "R", "Q", "K"]:
-
-            if pColor == "w":
-                imagesDict[pType] = pg.transform.scale(pg.image.load("Images/"+pColor+pType+".png"), (SQUARE_SIZE, SQUARE_SIZE))
-            elif pColor == "b":
-                imagesDict[pType.lower()] = pg.transform.scale(pg.image.load("Images/"+pColor+pType+".png"), (SQUARE_SIZE, SQUARE_SIZE))
 
 def drawImages(dis, board):
     board = of.make_matrix(board)
@@ -64,12 +77,22 @@ def drawImages(dis, board):
         for y in range(8):
             piece = board[x][y]
             try:
-                dis.blit(imagesDict[piece], pg.Rect(y * 100, x * 100, 100, 100))
+                dis.blit(imagesDict[piece], pg.Rect((y * 100) + 400, x * 100, 100, 100))
             
             except:
                 pass
 
-def load(dis, board, color_white, color_black):
-    drawBoard(dis, color_white, color_black, 100)
+def load(dis, board, color_white, color_black, height):
+    drawBoard(dis, color_white, color_black, height//8)
     drawImages(dis, board)
     pg.display.update()
+
+
+def startData():
+    pass
+
+def playerData():
+    pass
+
+def depthData():
+    pass
