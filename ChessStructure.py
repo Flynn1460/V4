@@ -5,73 +5,110 @@ import Engine as en
 import otherFunctions as of
 import playFunctions as pf
 
-dis = pg.display.set_mode((1200, 800), pg.RESIZABLE)
+dis = pg.display.set_mode((900, 600), pg.RESIZABLE)
+board = ch.Board()
 
 size = pg.display.get_surface()
 x, y = size.get_width(), size.get_height()
-board = ch.Board()
+
+whiteScore, blackScore, results = 0, 0, [0, 0, 0]
+noPrint = False
 
 def playerPlay(board):
-    global noPrint, depth
-
+    global noPrint, colour, depth
     if not noPrint:
-        colour = of.opt("Which colour do you want to play?", "w", "b")
-        depth = of.opt("What depth should the computer search to? (rec 4)", "int")
+        colour = "w"#of.opt("Which colour do you want to play?", "w", "b")
+        depth = 4#of.opt("What depth should the computer search to? (rec 4)", "int")
         pf.playerData()
-
-    if colour == "w":
-        board = playerMove(board)
-        pf.load(dis, board, of.SQ_COLOR_WHITE, of.SQ_COLOR_BLACK, y)
+    
+    ogColour = of.copyVar(colour, "w", "b")
 
     while True:
-        board = engineMove(board, colour, depth)
+        if ogColour != colour:
+            board.push(engineMove(board, colour, depth))
+        else:
+            board = playerMove(board)
 
         if pf.isGameEnd(board):
             return pf.isGameEnd(board)
         
-        pf.load(dis, board, of.SQ_COLOR_WHITE, of.SQ_COLOR_BLACK, y)
+        colour = of.flipColour(colour)
 
-
-        board = playerMove(board)
-
-        if pf.isGameEnd(board):
-            return pf.isGameEnd(board)
-
-        pf.load(dis, board, of.SQ_COLOR_WHITE, of.SQ_COLOR_BLACK, y)
+        pf.load(dis, board, size)
+        pf.loadEvents()
 
 def computerPlay(board):
     global noPrint, depth
-
+    colour = "w"
     if not noPrint:
         depth = 4#of.opt("What depth should the computer search to? (rec 4)", "int")
         pf.depthData()
 
     while True:
-        board = engineMove(board, "w", depth)
+        board.push(engineMove(board, colour, depth))
 
         if pf.isGameEnd(board):
             return pf.isGameEnd(board)
         
-        pf.load(dis, board, of.SQ_COLOR_WHITE, of.SQ_COLOR_BLACK, y)
-
-        board = engineMove(board, "b", depth)
-
-        if pf.isGameEnd(board):
-            return pf.isGameEnd(board)
+        colour = of.flipColour(colour)
         
-        pf.load(dis, board, of.SQ_COLOR_WHITE, of.SQ_COLOR_BLACK, y)
+        pf.load(dis, board, size)
+        pf.loadEvents()
 
 
 def playerMove(board):
+    atSquare, startCoords, boardHover = ".", [-1, -1], False
+    lastAction = None
+
+    startingBoard = board
+
+
     while True:
         try:
-            print("\nLegal Move List : " + str(board.legal_moves)[37:-1])
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    quit()
 
-            move = input("Your move : ")
-            board.push_san(move)
-            return board
+                if event.type == pg.MOUSEBUTTONDOWN:
+                    lastAction = "DOWN"
+                    if event.pos[0] < x//3:
+                        continue
 
-        except:
+                    boardHover = pf.getBoardHover(event.pos, (x, y))
+                    coordBoard = of.make_matrix(board)
+                    atSquare = coordBoard[boardHover[1]][boardHover[0]]
+
+                    if atSquare == ".":
+                        continue
+
+                    startCoords = boardHover
+
+
+                if event.type == pg.MOUSEBUTTONUP:
+                    lastAction = "UP"
+                    atSquare = "."
+                    if event.pos[0] < x//3:
+                        continue
+
+                    boardHover = pf.getBoardHover(event.pos, (x, y))
+                    coordBoard = of.make_matrix(board)
+
+                    move = of.coordsToString((startCoords[0], startCoords[1]), (boardHover[0], boardHover[1]))
+                    board.push_san(move)
+
+                    return board
+
+            # If a piece was lifted or the move was denied so the board stayed the same. Don't load a board overlay
+            if lastAction == "UP" and startingBoard == board:
+                pf.load(dis, board, size)
+
+            else:
+                pf.load(dis, board, size, atSquare=atSquare, pieceEraseCoords=startCoords)
+
+           
+
+
+        except ValueError:
             continue
 
 def engineMove(board, colour, depth):
@@ -80,24 +117,22 @@ def engineMove(board, colour, depth):
 
 pf.loadImages(100)
 pf.resizeImages(y)
-pf.load(dis, board, of.SQ_COLOR_WHITE, of.SQ_COLOR_BLACK, y)
+pf.load(dis, board, size)
 
-gamemode = "computer"#of.opt("What gamemode do you want to play?", "player", "computer")
+gamemode = "player"#of.opt("What gamemode do you want to play?", "player", "computer")
 autoplay = True#bool(of.opt("Do you want the games to autoplay?", "yes", "no"))
 pf.startData()
 
-whiteScore, blackScore, results = 0, 0, [0, 0, 0]
-noPrint = False
-
 
 while True:
+    board = ch.Board()
+
     size = pg.display.get_surface()
     x, y = size.get_width(), size.get_height()
+
     pf.resizeImages(y)
+    pf.load(dis, board, size)
 
-
-    board = ch.Board()
-    pf.load(dis, board, of.SQ_COLOR_WHITE, of.SQ_COLOR_BLACK, y)
 
     if gamemode == "player":
         val = playerPlay(board)
