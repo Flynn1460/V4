@@ -34,7 +34,7 @@ def flipColour(colour):
         return None
 
 
-def make_matrix(board): #type(board) == chess.Board()
+def boardify_fen(board): #type(board) == chess.Board()
     pgn = board.epd()
     foo = []  #Final board
     pieces = pgn.split(" ", 1)[0]
@@ -55,19 +55,19 @@ def undo_matrix_move(move):
     
     return (move[1] * 8) + move[0]
 
-def getOutcome(outcomeInfo, results, whiteScore, blackScore):
+def getOutcome(outcomeInfo, results):
     
     if outcomeInfo.result()[0:3] == "1/2":
         results[0] += 1
-        return results, whiteScore + 0.5, blackScore + 0.5
+        return results
 
     elif outcomeInfo.result()[0] == "1":
         results[1] += 1
-        return results, whiteScore + 1, blackScore
+        return results
     
     elif outcomeInfo.result()[2] == "1":
         results[2] += 1
-        return results, whiteScore, blackScore + 1
+        return results
     
 def copyVar(var, opt1, opt2):
     if var == opt1:

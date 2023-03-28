@@ -19,18 +19,22 @@ def isGameEnd(board):
         return False
 
 
-def loadImages(SQUARE_SIZE):
-    global images
+def loadImages(SQUARE_SIZE, size):
+    global images, backgroundImage
     images = []
+
+    backgroundImage = pg.image.load("Images/background.png")
+    backgroundImage = pg.transform.scale(backgroundImage, (size.get_width(), size.get_height()))
 
     for pColor in ["w", "b"]:
         for pType in ["P", "N", "B", "R", "Q", "K"]:
             images.append(pg.image.load("Images/"+pColor+pType+".png"))
 
-def resizeImages(SQUARE_SIZE):
-    SQUARE_SIZE = SQUARE_SIZE//8
-    global imagesDict
+def resizeImages(SQUARE_SIZE, size):
+    global imagesDict, backgroundImage
     imagesDict = {}
+
+    backgroundImage = pg.transform.scale(backgroundImage, (size[0], size[1]))
 
     i = -1
     for pColor in ["w", "b"]:
@@ -82,7 +86,7 @@ def drawImages(dis, board, coords):
     smCoord = of.smOf(coords[0], coords[1])
     
     SQ_SZ = smCoord//8
-    board = of.make_matrix(board)
+    board = of.boardify_fen(board)
 
     for x in range(8):
         for y in range(8):
@@ -93,16 +97,25 @@ def drawImages(dis, board, coords):
             except:
                 pass
 
-def load(dis, board, size, atSquare=False, pieceEraseCoords=False):
+def load(dis, board, size, dragItems=(False, False), sideText=False):
     x, y = size.get_width(), size.get_height()
+    SQ_SZ = (x - x//3)//8
+
+    dis.blit(backgroundImage, (0, 0))
 
     drawBoard(dis, (x, y))
 
     drawImages(dis, board, (x, y))
+    resizeImages(SQ_SZ, (x, y))
 
-    if atSquare:
-        redoSquare(dis, (x, y), pieceEraseCoords)
-        carryPiece(dis, atSquare, 75)
+    if dragItems[0]:
+        redoSquare(dis, (x, y), dragItems[1])
+        carryPiece(dis, dragItems[0], SQ_SZ)
+
+    if sideText:
+        for i in range(len(sideText)):
+            dis.blit(sideText[i], pg.Rect(10, 10+(i*40), x//3, 40))
+
     
     pg.display.update()
 
@@ -135,3 +148,18 @@ def carryPiece(dis, piece, SQUARE_SIZE):
         square_image = imagesDict[piece]
 
         dis.blit(square_image, (mouseLocation[0]-(SQUARE_SIZE//2), mouseLocation[1]-(SQUARE_SIZE//2)))
+
+def pieceAtSquare(board, coords):
+    return board[coords[1]][coords[0]]
+
+def loadScoreText(font, results):
+    whiteScore, blackScore = (results[0]/2) + results[1], (results[0]/2) + results[2]
+
+
+    textLines = ["Score : "+str(whiteScore)+" - "+str(blackScore), "Draws: "+str(results[0]), "White Wins: "+str(results[1]),   "Black Wins: "+str(results[2])]
+
+    text = []
+    for i in range(len(textLines)):
+        text.append(font.render(textLines[i], True, (200, 200, 200)))
+
+    return text

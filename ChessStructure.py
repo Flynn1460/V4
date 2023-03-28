@@ -1,25 +1,51 @@
 import chess as ch
 import pygame as pg
+pg.font.init()
 
 import Engine as en
 import otherFunctions as of
 import playFunctions as pf
 
 dis = pg.display.set_mode((900, 600), pg.RESIZABLE)
-board = ch.Board()
+
+pg.mouse.set_cursor(pg.SYSTEM_CURSOR_CROSSHAIR)
+pg.display.set_caption("Chess Version 4 - by Flynn")
 
 size = pg.display.get_surface()
 x, y = size.get_width(), size.get_height()
 
-whiteScore, blackScore, results = 0, 0, [0, 0, 0]
-noPrint = False
+font = pg.font.Font('Other/coconutFont.ttf', 20)
 
-def playerPlay(board):
+results = [0, 0, 0]
+text = pf.loadScoreText(font, results)
+
+
+def playervsplayerPlay(board):
     global noPrint, colour, depth
-    if not noPrint:
-        colour = "w"#of.opt("Which colour do you want to play?", "w", "b")
-        depth = 4#of.opt("What depth should the computer search to? (rec 4)", "int")
-        pf.playerData()
+
+    colour = "w"#of.opt("Which colour do you want to play?", "w", "b")
+    depth = 4#of.opt("What depth should the computer search to? (rec 4)", "int")
+    pf.playerData()
+    
+    ogColour = of.copyVar(colour, "w", "b")
+
+    while True:
+        board = playerMove(board)
+
+        if pf.isGameEnd(board):
+            return
+        
+        colour = of.flipColour(colour)
+
+        pf.load(dis, board, size, sideText=text)
+        pf.loadEvents()
+
+def playervscomputerPlay(board):
+    global noPrint, colour, depth
+
+    colour = "w"#of.opt("Which colour do you want to play?", "w", "b")
+    depth = 4#of.opt("What depth should the computer search to? (rec 4)", "int")
+    pf.playerData()
     
     ogColour = of.copyVar(colour, "w", "b")
 
@@ -30,117 +56,102 @@ def playerPlay(board):
             board = playerMove(board)
 
         if pf.isGameEnd(board):
-            return pf.isGameEnd(board)
+            return
         
         colour = of.flipColour(colour)
 
-        pf.load(dis, board, size)
+        pf.load(dis, board, size, sideText=text)
         pf.loadEvents()
 
-def computerPlay(board):
+def computervscomputerPlay(board):
     global noPrint, depth
     colour = "w"
-    if not noPrint:
-        depth = 4#of.opt("What depth should the computer search to? (rec 4)", "int")
-        pf.depthData()
+
+    depth = 4#of.opt("What depth should the computer search to? (rec 4)", "int")
+    pf.depthData()
 
     while True:
         board.push(engineMove(board, colour, depth))
 
         if pf.isGameEnd(board):
-            return pf.isGameEnd(board)
+            return
         
         colour = of.flipColour(colour)
         
-        pf.load(dis, board, size)
+        pf.load(dis, board, size, sideText=text)
         pf.loadEvents()
+
+def gamemodeSelect(gamemode):
+    if gamemode == "singleplayer":
+        return playervscomputerPlay(board)
+
+    elif gamemode == "multiplayer":
+        return playervsplayerPlay(board)
+
+    elif gamemode == "computer":
+        return computervscomputerPlay(board)
 
 
 def playerMove(board):
-    atSquare, startCoords, boardHover = ".", [-1, -1], False
-    lastAction = None
-
-    startingBoard = board
-
+    atSquare, startHover = None, [-1, -1]
+    lastAction, startingBoard = None, board
+    coordBoard = of.boardify_fen(board)
 
     while True:
-        try:
-            for event in pg.event.get():
-                if event.type == pg.QUIT:
-                    quit()
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                quit()
 
-                if event.type == pg.MOUSEBUTTONDOWN:
-                    lastAction = "DOWN"
-                    if event.pos[0] < x//3:
-                        continue
+            # If the mouse position is not withing the bounds of the board return.
+            if event.type == pg.MOUSEBUTTONDOWN or event.type == pg.MOUSEBUTTONUP:
+                if event.pos[0] < x//3:
+                    continue
 
-                    boardHover = pf.getBoardHover(event.pos, (x, y))
-                    coordBoard = of.make_matrix(board)
-                    atSquare = coordBoard[boardHover[1]][boardHover[0]]
+            if event.type == pg.MOUSEBUTTONDOWN:
+                lastAction = "DOWN"
 
-                    if atSquare == ".":
-                        continue
+                # Get which square the mouse is hovered over
+                startHover = pf.getBoardHover(event.pos, (x, y))
+                atSquare = pf.pieceAtSquare(coordBoard, startHover)
 
-                    startCoords = boardHover
+                if atSquare == ".":
+                    continue
 
 
-                if event.type == pg.MOUSEBUTTONUP:
-                    lastAction = "UP"
-                    atSquare = "."
-                    if event.pos[0] < x//3:
-                        continue
+            if event.type == pg.MOUSEBUTTONUP:
+                lastAction, atSquare = "UP", "."
 
-                    boardHover = pf.getBoardHover(event.pos, (x, y))
-                    coordBoard = of.make_matrix(board)
+                # Get which square the mouse is hovered over
+                boardHover = pf.getBoardHover(event.pos, (x, y))
+                move = of.coordsToString(startHover, boardHover)
 
-                    move = of.coordsToString((startCoords[0], startCoords[1]), (boardHover[0], boardHover[1]))
+                try:
                     board.push_san(move)
+                except:
+                    continue
 
-                    return board
+                return board
 
-            # If a piece was lifted or the move was denied so the board stayed the same. Don't load a board overlay
-            if lastAction == "UP" and startingBoard == board:
-                pf.load(dis, board, size)
-
-            else:
-                pf.load(dis, board, size, atSquare=atSquare, pieceEraseCoords=startCoords)
-
-           
-
-
-        except ValueError:
-            continue
+        # If a piece was lifted or the move was denied so the board stayed the same. Don't load a board overlay
+        if lastAction == "UP" and startingBoard == board:
+            pf.load(dis, board, size, sideText=text)
+        else:
+            pf.load(dis, board, size, dragItems=(atSquare, startHover), sideText=text)
 
 def engineMove(board, colour, depth):
     return en.giveBestMove(board)
 
 
-pf.loadImages(100)
-pf.resizeImages(y)
-pf.load(dis, board, size)
-
-gamemode = "player"#of.opt("What gamemode do you want to play?", "player", "computer")
-autoplay = True#bool(of.opt("Do you want the games to autoplay?", "yes", "no"))
-pf.startData()
-
+pf.loadImages(100, size)
+gamemode = "computer"#of.opt("What gamemode do you want to play?", "player", "computer")
 
 while True:
+    # Reset Variables
     board = ch.Board()
 
-    size = pg.display.get_surface()
-    x, y = size.get_width(), size.get_height()
+    # Play the game
+    gamemodeSelect(gamemode)
 
-    pf.resizeImages(y)
-    pf.load(dis, board, size)
-
-
-    if gamemode == "player":
-        val = playerPlay(board)
-
-    elif gamemode == "computer":
-        val = computerPlay(board)
-
-    results, whiteScore, blackScore = of.getOutcome(board.outcome(), results, whiteScore, blackScore)
-    noPrint = autoplay
-
-    print(str(whiteScore)+" - "+str(blackScore)+" | "+"Draws: "+str(results[0])+", "+"White Wins: "+str(results[1])+", "+"Black Wins: "+str(results[2])+"\n")
+    # Update Score Text
+    results = of.getOutcome(board.outcome(), results)
+    text = pf.loadScoreText(font, results)
