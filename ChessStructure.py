@@ -21,7 +21,7 @@ text = pf.loadScoreText(font, results)
 
 
 def playervsplayerPlay(board):
-    global noPrint, colour, depth
+    global colour, depth
 
     colour = "w"#of.opt("Which colour do you want to play?", "w", "b")
     depth = 4#of.opt("What depth should the computer search to? (rec 4)", "int")
@@ -41,9 +41,9 @@ def playervsplayerPlay(board):
         pf.loadEvents()
 
 def playervscomputerPlay(board):
-    global noPrint, colour, depth
+    global colour, depth
 
-    colour = "w"#of.opt("Which colour do you want to play?", "w", "b")
+    colour = "b"#of.opt("Which colour do you want to play?", "w", "b")
     depth = 4#of.opt("What depth should the computer search to? (rec 4)", "int")
     pf.playerData()
     
@@ -51,7 +51,7 @@ def playervscomputerPlay(board):
 
     while True:
         if ogColour != colour:
-            board.push(engineMove(board, colour, depth))
+            board.push_san(engineMove(board, colour, depth))
         else:
             board = playerMove(board)
 
@@ -64,8 +64,8 @@ def playervscomputerPlay(board):
         pf.loadEvents()
 
 def computervscomputerPlay(board):
-    global noPrint, depth
-    colour = "w"
+    global depth
+    colour = True
 
     depth = 4#of.opt("What depth should the computer search to? (rec 4)", "int")
     pf.depthData()
@@ -76,10 +76,11 @@ def computervscomputerPlay(board):
         if pf.isGameEnd(board):
             return
         
-        colour = of.flipColour(colour)
+        colour = not colour
         
         pf.load(dis, board, size, sideText=text)
         pf.loadEvents()
+
 
 def gamemodeSelect(gamemode):
     if gamemode == "singleplayer":
@@ -117,7 +118,6 @@ def playerMove(board):
                 if atSquare == ".":
                     continue
 
-
             if event.type == pg.MOUSEBUTTONUP:
                 lastAction, atSquare = "UP", "."
 
@@ -139,11 +139,16 @@ def playerMove(board):
             pf.load(dis, board, size, dragItems=(atSquare, startHover), sideText=text)
 
 def engineMove(board, colour, depth):
-    return en.giveBestMove(board)
+    if colour == "w":
+        colour = True
+    elif colour == "b":
+        colour = False
+
+    return en.giveBestMove(board, colour)
 
 
 pf.loadImages(100, size)
-gamemode = "computer"#of.opt("What gamemode do you want to play?", "player", "computer")
+gamemode = "singleplayer"#of.opt("What gamemode do you want to play?", "player", "computer")
 
 while True:
     # Reset Variables
