@@ -1,5 +1,4 @@
-import chess as ch
-import pygame as pg
+import chess as ch, pygame as pg
 import otherFunctions as of
 
 def isGameEnd(board):
@@ -19,7 +18,22 @@ def isGameEnd(board):
         return False
 
 
-def loadImages(SQUARE_SIZE, size):
+def drawImages(dis, board, coords):
+    smCoord = of.smOf(coords[0], coords[1])
+    
+    SQ_SZ = smCoord//8
+    board = of.boardify_fen(board)
+
+    for x in range(8):
+        for y in range(8):
+            piece = board[x][y]
+            try:
+                dis.blit(imagesDict[piece], ((y * SQ_SZ) + (coords[0]//3), x * SQ_SZ, SQ_SZ, SQ_SZ))
+            
+            except:
+                pass
+
+def loadImages(size):
     global images, backgroundImage
     images = []
 
@@ -82,21 +96,6 @@ def redoSquare(dis, dims, startCoords):
     pg.draw.rect(dis, squareFill, ((startCoords[0] * SQ_SZ) + (dims[0]//3), startCoords[1] * SQ_SZ, SQ_SZ, SQ_SZ))
 
 
-def drawImages(dis, board, coords):
-    smCoord = of.smOf(coords[0], coords[1])
-    
-    SQ_SZ = smCoord//8
-    board = of.boardify_fen(board)
-
-    for x in range(8):
-        for y in range(8):
-            piece = board[x][y]
-            try:
-                dis.blit(imagesDict[piece], ((y * SQ_SZ) + (coords[0]//3), x * SQ_SZ, SQ_SZ, SQ_SZ))
-            
-            except:
-                pass
-
 def load(dis, board, size, dragItems=(False, False), sideText=False):
     x, y = size.get_width(), size.get_height()
     SQ_SZ = (x - x//3)//8
@@ -118,16 +117,6 @@ def load(dis, board, size, dragItems=(False, False), sideText=False):
 
     
     pg.display.update()
-
-
-def startData():
-    pass
-
-def playerData():
-    pass
-
-def depthData():
-    pass
 
 def loadEvents():
     for event in pg.event.get():
@@ -163,3 +152,4 @@ def loadScoreText(font, results):
         text.append(font.render(textLines[i], True, (200, 200, 200)))
 
     return text
+

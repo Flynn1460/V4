@@ -48,8 +48,6 @@ def engine(board, isComputerWhite):
         # Evaluate the new position
         positionEvaluation = evaluatePosition(board, isComputerWhite)
 
-        print(positionEvaluation,"\n", board, "\n")
-
         if positionEvaluation > bestMoveAmount:
             bestMoves, bestMoveAmount = [move], positionEvaluation
         
@@ -57,9 +55,6 @@ def engine(board, isComputerWhite):
             bestMoves.append(move)
 
         board.pop()
-
-
-    print(bestMoveAmount, bestMoves)
     
     return random.choice(bestMoves)
 

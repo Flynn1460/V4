@@ -1,5 +1,4 @@
-import chess as ch
-import pygame as pg
+import chess as ch, pygame as pg
 pg.font.init()
 
 import Engine as en
@@ -19,62 +18,39 @@ font = pg.font.Font('Other/coconutFont.ttf', 20)
 results = [0, 0, 0]
 text = pf.loadScoreText(font, results)
 
+currentMoveList = []
+
 
 def playervsplayerPlay(board):
-    global colour, depth
-
-    colour = "w"#of.opt("Which colour do you want to play?", "w", "b")
-    depth = 4#of.opt("What depth should the computer search to? (rec 4)", "int")
-    pf.playerData()
+    colour = True
     
-    ogColour = of.copyVar(colour, "w", "b")
-
-    while True:
+    while not pf.isGameEnd(board):
         board = playerMove(board)
-
-        if pf.isGameEnd(board):
-            return
         
-        colour = of.flipColour(colour)
-
+        colour = not colour
         pf.load(dis, board, size, sideText=text)
-        pf.loadEvents()
 
 def playervscomputerPlay(board):
-    global colour, depth
-
-    colour = "b"#of.opt("Which colour do you want to play?", "w", "b")
-    depth = 4#of.opt("What depth should the computer search to? (rec 4)", "int")
-    pf.playerData()
+    colour, depth = False, 4
     
-    ogColour = of.copyVar(colour, "w", "b")
+    ogColour = of.copyVar(colour, True, False)
 
-    while True:
+    while not pf.isGameEnd(board):
         if ogColour != colour:
-            board.push_san(engineMove(board, colour, depth))
+            board = engineMove(board, colour, depth)
         else:
             board = playerMove(board)
 
-        if pf.isGameEnd(board):
-            return
-        
-        colour = of.flipColour(colour)
+        colour = not colour
 
         pf.load(dis, board, size, sideText=text)
         pf.loadEvents()
 
 def computervscomputerPlay(board):
-    global depth
-    colour = True
+    colour, depth = True, 4
 
-    depth = 4#of.opt("What depth should the computer search to? (rec 4)", "int")
-    pf.depthData()
-
-    while True:
-        board.push(engineMove(board, colour, depth))
-
-        if pf.isGameEnd(board):
-            return
+    while not pf.isGameEnd(board):
+        board = engineMove(board, colour, depth)
         
         colour = not colour
         
@@ -94,6 +70,8 @@ def gamemodeSelect(gamemode):
 
 
 def playerMove(board):
+    global currentMoveList
+
     atSquare, startHover = None, [-1, -1]
     lastAction, startingBoard = None, board
     coordBoard = of.boardify_fen(board)
@@ -115,22 +93,22 @@ def playerMove(board):
                 startHover = pf.getBoardHover(event.pos, (x, y))
                 atSquare = pf.pieceAtSquare(coordBoard, startHover)
 
-                if atSquare == ".":
-                    continue
 
             if event.type == pg.MOUSEBUTTONUP:
                 lastAction, atSquare = "UP", "."
 
                 # Get which square the mouse is hovered over
                 boardHover = pf.getBoardHover(event.pos, (x, y))
-                move = of.coordsToString(startHover, boardHover)
 
+                # Actions may crash indicating an illegal player move
                 try:
+                    # Turn the coordinates into a move vector
+                    move = of.coordsToString(startHover, boardHover)
+                    # Push the move onto the board
                     board.push_san(move)
+                    return board
                 except:
                     continue
-
-                return board
 
         # If a piece was lifted or the move was denied so the board stayed the same. Don't load a board overlay
         if lastAction == "UP" and startingBoard == board:
@@ -139,16 +117,14 @@ def playerMove(board):
             pf.load(dis, board, size, dragItems=(atSquare, startHover), sideText=text)
 
 def engineMove(board, colour, depth):
-    if colour == "w":
-        colour = True
-    elif colour == "b":
-        colour = False
+    global currentMoveList
+    board.push_san(en.giveBestMove(board, colour))
 
-    return en.giveBestMove(board, colour)
+    return board
 
 
-pf.loadImages(100, size)
-gamemode = "singleplayer"#of.opt("What gamemode do you want to play?", "player", "computer")
+pf.loadImages(size)
+gamemode = "singleplayer"
 
 while True:
     # Reset Variables
@@ -160,3 +136,4 @@ while True:
     # Update Score Text
     results = of.getOutcome(board.outcome(), results)
     text = pf.loadScoreText(font, results)
+
