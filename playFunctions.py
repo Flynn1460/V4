@@ -1,6 +1,26 @@
 import chess as ch, pygame as pg
 import otherFunctions as of
 
+def initScreen(dis, text):
+    dis.blit(backgroundImage, (0, 0))
+
+    for i in range(len(text)):
+        dis.blit(text[i], pg.Rect(10, 10+(i*40), sideWidth, 40))
+
+    pg.display.update()
+
+def updateVars(dimentions):
+    global SQ_SZ, width, height, sideWidth, sideHeight
+
+    width, height = dimentions[0], dimentions[1]
+
+    sideWidth, sideHeight = width-height, height
+
+    dimentions = [of.fraction(2, 3, dimentions[0])  ,  dimentions[1]]
+
+    smCoord = of.smOf(dimentions[0], dimentions[1])
+    SQ_SZ = smCoord//8
+
 def isGameEnd(board):
     if board.is_checkmate():
         return True, "Mate"
@@ -18,37 +38,34 @@ def isGameEnd(board):
         return False
 
 
-def drawImages(dis, board, coords):
-    smCoord = of.smOf(coords[0], coords[1])
-    
-    SQ_SZ = smCoord//8
+def drawImages(dis, board):
     board = of.boardify_fen(board)
 
     for x in range(8):
         for y in range(8):
             piece = board[x][y]
             try:
-                dis.blit(imagesDict[piece], ((y * SQ_SZ) + (coords[0]//3), x * SQ_SZ, SQ_SZ, SQ_SZ))
+                dis.blit(imagesDict[piece], ((y * SQ_SZ) + (sideWidth), x * SQ_SZ, SQ_SZ, SQ_SZ))
             
             except:
                 pass
 
-def loadImages(size):
+def loadImages():
     global images, backgroundImage
     images = []
 
     backgroundImage = pg.image.load("Images/background.png")
-    backgroundImage = pg.transform.scale(backgroundImage, (size.get_width(), size.get_height()))
+    backgroundImage = pg.transform.scale(backgroundImage, (width, height))
 
     for pColor in ["w", "b"]:
         for pType in ["P", "N", "B", "R", "Q", "K"]:
             images.append(pg.image.load("Images/"+pColor+pType+".png"))
 
-def resizeImages(SQUARE_SIZE, size):
+def resizeImages():
     global imagesDict, backgroundImage
     imagesDict = {}
 
-    backgroundImage = pg.transform.scale(backgroundImage, (size[0], size[1]))
+    backgroundImage = pg.transform.scale(backgroundImage, (width, height))
 
     i = -1
     for pColor in ["w", "b"]:
@@ -56,15 +73,12 @@ def resizeImages(SQUARE_SIZE, size):
             i += 1
 
             if pColor == "w":
-                imagesDict[pType] = pg.transform.scale(images[i], (SQUARE_SIZE, SQUARE_SIZE))
+                imagesDict[pType] = pg.transform.scale(images[i], (SQ_SZ, SQ_SZ))
             elif pColor == "b":
-                imagesDict[pType.lower()] = pg.transform.scale(images[i], (SQUARE_SIZE, SQUARE_SIZE))
+                imagesDict[pType.lower()] = pg.transform.scale(images[i], (SQ_SZ, SQ_SZ))
 
 
-def drawBoard(dis, coords):
-    smCoord = of.smOf(coords[0], coords[1])
-
-    SQ_SZ = smCoord//8
+def drawBoard(dis):
     # Board Color (0 = White, 1 = Black)
     CURRENT_VAL = 1
 
@@ -82,41 +96,32 @@ def drawBoard(dis, coords):
         for y in range(8):
 
             # Draw the square
-            pg.draw.rect(dis, CURRENT_COLOR, ((y * SQ_SZ) + (coords[0]//3), x * SQ_SZ, SQ_SZ, SQ_SZ))
+            pg.draw.rect(dis, CURRENT_COLOR, ((y * SQ_SZ) + (sideWidth), x * SQ_SZ, SQ_SZ, SQ_SZ))
 
             # Flip the square color
             CURRENT_VAL = CURRENT_VAL^1
             CURRENT_COLOR = SQUARE_COLOR_LIST[CURRENT_VAL]
 
-def redoSquare(dis, dims, startCoords):
-    smCoord = of.smOf(dims[0], dims[1])
-    SQ_SZ = smCoord//8
-
+def redoSquare(dis, startCoords):
     squareFill = of.colourBin(startCoords)
-    pg.draw.rect(dis, squareFill, ((startCoords[0] * SQ_SZ) + (dims[0]//3), startCoords[1] * SQ_SZ, SQ_SZ, SQ_SZ))
+    pg.draw.rect(dis, squareFill, ((startCoords[0] * SQ_SZ) + (sideWidth), startCoords[1] * SQ_SZ, SQ_SZ, SQ_SZ))
 
 
-def load(dis, board, size, dragItems=(False, False), sideText=False):
-    x, y = size.get_width(), size.get_height()
-    SQ_SZ = (x - x//3)//8
-
+def load(dis, board, size, dragItems=(False, False)):
     dis.blit(backgroundImage, (0, 0))
+    x, y = size.get_width(), size.get_height()
+    updateVars((x, y))
 
-    drawBoard(dis, (x, y))
+    drawBoard(dis)
 
-    drawImages(dis, board, (x, y))
-    resizeImages(SQ_SZ, (x, y))
+    resizeImages()
+    drawImages(dis, board)
 
     if dragItems[0]:
-        redoSquare(dis, (x, y), dragItems[1])
-        carryPiece(dis, dragItems[0], SQ_SZ)
-
-    if sideText:
-        for i in range(len(sideText)):
-            dis.blit(sideText[i], pg.Rect(10, 10+(i*40), x//3, 40))
-
+        redoSquare(dis, dragItems[1])
+        carryPiece(dis, dragItems[0])
     
-    pg.display.update()
+    pg.display.update(300, 0, width, height)
 
 def loadEvents():
     for event in pg.event.get():
@@ -124,19 +129,18 @@ def loadEvents():
             quit()
 
 
-def getBoardHover(mousePos, size):
-    sq_sz = ((2*size[0]) // 3) // 8
-    mousePosition = [  (mousePos[0] - size[0]//3) // sq_sz  ,  (mousePos[1]) // sq_sz  ]
+def getBoardHover(mousePos):
+    mousePosition = [  (mousePos[0] - sideWidth) // SQ_SZ  ,  (mousePos[1]) // SQ_SZ  ]
 
     return mousePosition
 
-def carryPiece(dis, piece, SQUARE_SIZE):
+def carryPiece(dis, piece):
     if piece != ".":
         mouseLocation = pg.mouse.get_pos()
 
         square_image = imagesDict[piece]
 
-        dis.blit(square_image, (mouseLocation[0]-(SQUARE_SIZE//2), mouseLocation[1]-(SQUARE_SIZE//2)))
+        dis.blit(square_image, (mouseLocation[0]-(SQ_SZ//2), mouseLocation[1]-(SQ_SZ//2)))
 
 def pieceAtSquare(board, coords):
     return board[coords[1]][coords[0]]

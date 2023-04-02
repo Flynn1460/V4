@@ -1,4 +1,4 @@
-import chess as ch, random, playFunctions as pf, time
+import chess as ch, random, playFunctions as pf, Opening as op
 
 pieces = {
     None : "0",
@@ -30,13 +30,13 @@ def evaluatePosition(board, colour):
     pieceValue = 0
     for i in range(64):
         pieceValue += changeValueFromPiece(board, i, True)
+        #pieceValue += addPositionalValue(board, i)
 
     return pieceValue
 
 
-
 # Min Max Algorithm      
-def engine(board, isComputerWhite):
+def engine(board, isComputerWhite, moveList):
     # Get a list of the legal moves
     positionMovesList = cutLegalMoves(board.legal_moves)
     bestMoveAmount, bestMoves = -999, []
@@ -60,7 +60,6 @@ def engine(board, isComputerWhite):
 
 
 
-def giveBestMove(board, colour):
-    return engine(board, colour)
-
+def giveBestMove(board, colour, moveList):
+    return engine(board, colour, moveList)
 

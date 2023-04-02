@@ -110,3 +110,13 @@ def colourBin(coordinates):
     else:
         return SQ_COLOR_WHITE
 
+def convertUCItoNotation(board, UCImove):
+    move = chess.Move.from_uci(UCImove)
+
+    return board.san(move)
+
+def fraction(nominator, denomitor, number, dontRound = False):
+    if dontRound:
+        return (number*nominator)/denomitor
+    else:
+        return (number*nominator)//denomitor
